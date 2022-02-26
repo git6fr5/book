@@ -9,6 +9,8 @@ using UnityEngine;
 public class Player : Controller {
 
     /* --- Components --- */
+    public MeshSprite[] spritesheets;
+    public int activeID;
 
     /* --- Parameters --- */
 
@@ -20,6 +22,7 @@ public class Player : Controller {
     /* --- Overridden Methods --- */
     protected override void Init() {
         base.Init();
+        SetActiveBook(0);
     }
 
     // Runs the thinking logic.
@@ -52,6 +55,12 @@ public class Player : Controller {
 
     public void CollectCoin() {
         coins += 1;
+    }
+
+    public void SetActiveBook(int bookID) {
+        spritesheets[activeID].gameObject.SetActive(false);
+        spritesheets[bookID].gameObject.SetActive(true);
+        activeID = bookID;
     }
 
 }

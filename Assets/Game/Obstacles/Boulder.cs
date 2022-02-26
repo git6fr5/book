@@ -51,8 +51,8 @@ public class Boulder : MonoBehaviour {
     private void ProcessCollision(Collision2D collision) {
         print(collision.gameObject.name);
         if (collision.gameObject.GetComponent<BreakableBlock>()) {
-            Destroy(collision.gameObject);
-            Destroy(gameObject);
+            collision.gameObject.GetComponent<BreakableBlock>().Break();
+            // Destroy(gameObject);
         }
     }
 

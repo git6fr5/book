@@ -12,13 +12,20 @@ public class Book : MonoBehaviour {
     /* --- Static Variables --- */
     public static int Width = 24;
     public static int Height = 16;
+    public static float FlipInterval = 0.3f;
 
     /* --- Components --- */
     [HideInInspector] public BoxCollider2D box;
     [SerializeField] public Transform obstacleParentTransform;
+    [SerializeField] public Counter counter;
+    [SerializeField] public GameObject cover;
 
     /* --- Parameters --- */
     [SerializeField] public RuleTile tile;
+    [SerializeField] public RuleTile background;
+    [SerializeField] public Decoration decor;
+    [SerializeField] public List<GameObject> decorations;
+
     [SerializeField] public int bookID;
     [SerializeField] public Vector2Int bookPosition;
 
@@ -31,9 +38,11 @@ public class Book : MonoBehaviour {
     [SerializeField, ReadOnly] public Page[] pages;
     [SerializeField, ReadOnly] public int pageNumber;
     [SerializeField, ReadOnly] public int pagesCollected;
-    [SerializeField, ReadOnly] private bool isActive;
+    [SerializeField, ReadOnly] public bool isActive;
     [SerializeField, ReadOnly] private bool isSelected;
     [SerializeField, ReadOnly] public bool isInitialized;
+    [SerializeField, ReadOnly] public bool flippingPage;
+    [SerializeField, ReadOnly] public Vector3 flipDirection;
 
     /* --- Unity --- */
     void Start() {
@@ -77,12 +86,17 @@ public class Book : MonoBehaviour {
             return;
         }
 
+        if (cover != null) {
+            cover.SetActive(false);
+        }
+
         for (int i = 0; i < pages.Length; i++) {
             pages[i].gameObject.SetActive(false);
         }
 
         pageNumber = 0;
         pages[0].On();
+        World.LoadDecor(this, pages[pageNumber].decorData);
 
         box = GetComponent<BoxCollider2D>();
         box.enabled = true;
@@ -95,6 +109,10 @@ public class Book : MonoBehaviour {
     }
 
     private void Deinit() {
+
+        if (cover != null) {
+            cover.SetActive(true);
+        }
         for (int i = 0; i < pages.Length; i++) {
             pages[i].gameObject.SetActive(false);
         }
@@ -109,8 +127,18 @@ public class Book : MonoBehaviour {
     }
 
     private void Flip() {
+
+        if (counter != null) {
+            counter.transform.SetParent(null);
+            counter.SetScore(pageNumber, pagesCollected, pages.Length);
+        }
+
         if (pagesCollected == 0) {
             return;
+        }
+
+        if (flippingPage) {
+            transform.position += flipDirection * 32f * Time.deltaTime / FlipInterval;
         }
 
         if (nextPage) {
@@ -123,12 +151,20 @@ public class Book : MonoBehaviour {
             prevPage = false;
         }
 
+        if (!isActive && isSelected) {
+            pages[pageNumber].tilemap.color = new Color(0.5f, 0.5f, 0.5f);
+        }
+        else {
+            pages[pageNumber].tilemap.color = new Color(1f, 1f, 1f);
+        }
+
         nextPage = Input.GetMouseButtonDown(0) && !isActive && isSelected;
         prevPage = Input.GetMouseButtonDown(1) && !isActive && isSelected;
     }
 
     private void ProccessCollision(Collider2D collider, bool enable) {
         if (collider.GetComponent<Hurtbox>()?.controller == GameRules.MainPlayer) {
+            // WorldNoises.PlaySound(WorldNoises.ChangeBooks);
             isActive = enable;
         }
         // For right now, it is just boulders and projectiles...
@@ -147,23 +183,68 @@ public class Book : MonoBehaviour {
     }
 
     private void NextPage() {
-        if (pageNumber + 1 >= Mathf.Min(pages.Length, pagesCollected)) {
+        if (flippingPage) {
             return;
         }
+        if (pageNumber + 1 >= Mathf.Min(pages.Length, pagesCollected)) {
+            return; // pageNumber = 0;
+        }
 
-        pages[pageNumber].Off();
-        pageNumber += 1;
-        pages[pageNumber].On();
+        flippingPage = true;
+        StartCoroutine(IEFlipPage(1));
+        
     }
 
     private void PrevPage() {
-        if (pageNumber - 1 < 0) {
+        if (flippingPage) {
             return;
         }
+        if (pageNumber - 1 < 0) {
+            return; // pageNumber = Mathf.Min(pages.Length, pagesCollected) - 1;
+        }
 
-        pages[pageNumber].Off(); 
-        pageNumber -= 1;
-        pages[pageNumber].On();
+        flippingPage = true;
+        StartCoroutine(IEFlipPage(-1));
+        
+
+    }
+
+    private IEnumerator IEFlipPage(int index) {
+        WorldNoises.PlaySound(WorldNoises.ChangePages);
+
+        box.isTrigger = false;
+
+        for (int i = 0; i < decorations.Count; i++) {
+            decorations[i].SetActive(false);
+        }
+
+        if (index > 0) {
+            flipDirection = new Vector3(bookPosition.x, 0f, 0f);
+        }
+        else {
+            flipDirection = new Vector3(0f, bookPosition.y, 0f);
+        }
+        yield return new WaitForSeconds(FlipInterval);
+        if (index > 0) {
+            transform.position = new Vector3(0f, bookPosition.y * 32f, 0f);
+            flipDirection = new Vector3(0f, -bookPosition.y, 0f);
+        }
+        else {
+            transform.position = new Vector3(bookPosition.x * 32f, 0f, 0f);
+            flipDirection = new Vector3(-bookPosition.x, 0f, 0f);
+        }
+        pages[pageNumber].Off();
+        pageNumber += index;
+        pages[pageNumber].On(false);
+        yield return new WaitForSeconds(FlipInterval);
+        pages[pageNumber].OnDelay();
+        World.LoadDecor(this, pages[pageNumber].decorData);
+        flippingPage = false;
+        transform.position = Vector3.zero;
+
+        box.isTrigger = true;
+
+        yield return null;
 
     }
 

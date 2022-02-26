@@ -12,7 +12,7 @@ public class Trigger : MonoBehaviour {
 
     /* --- Components --- */
     [HideInInspector] public BoxCollider2D box;
-    [HideInInspector] public Monster monster;
+    public Monster[] monsters;
 
     /* --- Unity --- */
     void Start() {
@@ -20,11 +20,16 @@ public class Trigger : MonoBehaviour {
     }
     
     void OnTriggerEnter2D(Collider2D collider) {
-        monster.isActive = true;
+        monsters = (Monster[])GameObject.FindObjectsOfType(typeof(Monster));
+        for (int i = 0; i < monsters.Length; i++) {
+            monsters[i].isActive = true;
+        }
     }
 
     void OnTriggerExit2D(Collider2D collider) {
-        monster.isActive = false;
+        for (int i = 0; i < monsters.Length; i++) {
+            monsters[i].isActive = false;
+        }
     }
 
     /* --- Methods --- */
@@ -32,7 +37,6 @@ public class Trigger : MonoBehaviour {
         box = GetComponent<BoxCollider2D>();
         box.isTrigger = true;
 
-        monster = transform.parent.GetComponent<Monster>();
     }
 
 }

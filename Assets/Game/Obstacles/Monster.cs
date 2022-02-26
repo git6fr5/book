@@ -9,19 +9,13 @@ using UnityEngine;
 [RequireComponent(typeof(SpriteRenderer))]
 public class Monster : MonoBehaviour {
 
-    /* --- Enumerations --- */
-    public enum Direction {
-        Left,
-        Right
-    }
-
     /* --- Components --- */
     [HideInInspector] public SpriteRenderer spriteRenderer;
     [SerializeField] public Projectile projectile;
 
     /* --- Parameters --- */
     [SerializeField] private float fireInterval;
-    [SerializeField] private Direction direction;
+    [SerializeField] public Vector2 direction;
     [SerializeField] private float speed;
 
     /* --- Properties --- */
@@ -47,7 +41,6 @@ public class Monster : MonoBehaviour {
 
     private void FireProjectile() {
         Projectile newProjectile = Instantiate(projectile, transform.position, Quaternion.identity, null);
-        Vector2 direction = this.direction == Direction.Right ? Vector2.right : Vector2.left;
         newProjectile.Init(direction.normalized * speed);
     }
 

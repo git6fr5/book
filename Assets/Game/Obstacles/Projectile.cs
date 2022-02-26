@@ -33,7 +33,7 @@ public class Projectile : MonoBehaviour {
 
     private void ProcessCollision(Collider2D collider) {
         if (collider.GetComponent<BreakableBlock>()) {
-            Destroy(collider.gameObject);
+            collider.GetComponent<BreakableBlock>().Break();
             Destroy(gameObject);
         }
     }

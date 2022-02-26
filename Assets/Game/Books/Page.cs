@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
+using LDtkTileData = World.LDtkTileData;
+
 /// <summary>
 /// 
 /// </summary>
@@ -25,12 +27,14 @@ public class Page : MonoBehaviour {
 
     /* --- Components --- */
     [SerializeField, HideInInspector] public Tilemap tilemap;
+    [SerializeField] public Tilemap background;
 
     /* --- Properties --- */
     [SerializeField, ReadOnly] public int pageNumber;
     [SerializeField, ReadOnly] public List<PageObject> pageObjects = new List<PageObject>();
     [SerializeField, ReadOnly] public List<GameObject> currentObjects = new List<GameObject>();
     [SerializeField, ReadOnly] public bool isInitialized = false;
+    [SerializeField, ReadOnly] public List<LDtkTileData> decorData = new List<LDtkTileData>();
 
     /* --- Unity --- */
     void Start() {
@@ -39,13 +43,34 @@ public class Page : MonoBehaviour {
         }
     }
 
-    public void On() {
+    public void On(bool noDelay = true) {
         gameObject.SetActive(true);
         if (!isInitialized) {
             Init();
         }
+        if (noDelay) {
+            OnDelay();
+        }
+        else {
+            foreach (Transform child in transform) {
+                if (child.GetComponent<Coin>() != null || child.GetComponent<BreakableBlock>() != null) {
+                    child.gameObject.SetActive(false);
+                }
+                if (child.GetComponent<Boulder>() != null) {
+                    child.gameObject.SetActive(false);
+                }
+            }
+        }
+    }
+
+    public void OnDelay() {
         if (isInitialized && pageObjects != null) {
             CreateObjects();
+        }
+        foreach (Transform child in transform) {
+            if (child.GetComponent<Coin>() != null || child.GetComponent<BreakableBlock>() != null) {
+                child.gameObject.SetActive(true);
+            }
         }
     }
 
@@ -61,13 +86,15 @@ public class Page : MonoBehaviour {
         tilemap = GetComponent<Tilemap>();
 
         CollectObjects();
+        background.gameObject.SetActive(true);
         isInitialized = true;
     }
 
     void CollectObjects() {
         foreach (Transform child in transform) {
-            if (child.gameObject.activeSelf) {
-                PageObject pageObject = new PageObject(child.gameObject, child.position);
+            bool exception = child.GetComponent<Coin>() != null || child.GetComponent<BreakableBlock>() != null || child.GetComponent<Tilemap>() != null;
+            if (child.gameObject.activeSelf && !exception) {
+                PageObject pageObject = new PageObject(child.gameObject, child.localPosition);
                 pageObjects.Add(pageObject);
             }
         }
@@ -76,6 +103,7 @@ public class Page : MonoBehaviour {
     void CreateObjects() {
         for (int i = 0; i < pageObjects.Count; i++) {
             GameObject newObject = Instantiate(pageObjects[i].gameObject, pageObjects[i].origin, Quaternion.identity, transform);
+            newObject.transform.localPosition = pageObjects[i].origin;
             newObject.SetActive(true);
             currentObjects.Add(newObject);
         }

@@ -51,6 +51,21 @@ public class World : MonoBehaviour {
         OpenAllPages();
     }
 
+    void Update() {
+
+        if (GameRules.MainPlayer == null) {
+            return;
+        }
+        //for (int i = 0; i < books.Length; i++) {
+        //    if (books[i].isActive) {
+        //        if (books[i].bookID != GameRules.MainPlayer.activeID) {
+        //            GameRules.MainPlayer.SetActiveBook(books[i].bookID);
+        //        }
+        //    }
+        //}
+
+    }
+
     /* --- Methods --- */
     void OpenAllPages() {
 
@@ -104,12 +119,17 @@ public class World : MonoBehaviour {
 
             // Load the entity data.
             List<LDtkTileData> obstacleData = LoadLayer(ldtkLevel, ObstacleLayer, GameRules.GridSize);
+            List<LDtkTileData> decorData = LoadLayer(ldtkLevel, DecorLayer, GameRules.GridSize);
+            List<LDtkTileData> controlData = LoadLayer(ldtkLevel, ControlLayer, GameRules.GridSize);
             List<LDtkTileData> groundData = LoadLayer(ldtkLevel, GroundLayer, GameRules.GridSize);
 
             // Instatiantate and set up the entities using the data.
             book.FindEntities(book.obstacleParentTransform, ref book.obstacles);
-            LoadEntities(book, page, obstacleData, book.obstacles);
+            page.decorData = decorData;
+            List<Entity> obstacles = LoadEntities(book, page, obstacleData, book.obstacles);
             LoadTiles(book, page, groundData);
+
+            SetControls(obstacles, controlData);
         }
 
     }
@@ -192,7 +212,12 @@ public class World : MonoBehaviour {
         List<Vector3Int> nonEmptyTiles = new List<Vector3Int>();
         for (int i = 0; i < data.Count; i++) {
             Vector3Int tilePosition = book.GridToTilePosition(data[i].gridPosition);
-            page.tilemap.SetTile(tilePosition, book.tile);
+            if (data[i].vectorID == new Vector2Int(0, 0)) {
+                page.tilemap.SetTile(tilePosition, book.tile);
+            }
+            else if (data[i].vectorID == new Vector2Int(1, 0)) {
+                page.background.SetTile(tilePosition, book.background);
+            }
             nonEmptyTiles.Add(tilePosition);
         }
 
@@ -208,5 +233,62 @@ public class World : MonoBehaviour {
         }
         return null;
     }
+
+    // Set all the tiles in a tilemap.
+    public static void LoadDecor(Book book, List<LDtkTileData> data) {
+
+        if (book.decor == null) {
+            return;
+        }
+
+        print("Loading decor");
+        if (book.decorations != null) {
+            for (int i = 0; i < book.decorations.Count; i++) {
+                if (book.decorations[i] != null) {
+                    GameObject thisObject = book.decorations[i];
+                    Destroy(thisObject);
+                }
+            }
+        }
+        book.decorations = new List<GameObject>();
+
+        for (int i = 0; i < data.Count; i++) {
+            Vector3 position = book.GridToWorldPosition(data[i].gridPosition);
+            GameObject newDecor = Instantiate(book.decor.gameObject, book.transform.position, Quaternion.identity, null);
+            newDecor.transform.position = position;
+            newDecor.GetComponent<Decoration>().Init(data[i].vectorID);
+            book.decorations.Add(newDecor);
+            print("Creating decor");
+        }
+
+    }
+
+    public void SetControls(List<Entity> entities, List<LDtkTileData> controls) {
+
+        for (int i = 0; i < controls.Count; i++) {
+            for (int j = 0; j < entities.Count; j++) {
+                Monster monster = entities[j].GetComponent<Monster>();
+                if (controls[i].gridPosition == entities[j].gridPosition && monster != null) {
+                    print("Hello");
+                    if (controls[i].vectorID.x == 0) {
+                        monster.direction = Vector2.right;
+                    }
+                    else if (controls[i].vectorID.x == 1) {
+                        monster.direction = Vector2.up;
+                    }
+                    else if (controls[i].vectorID.x == 2) {
+                        monster.direction = Vector2.left;
+                    }
+                    else if (controls[i].vectorID.x == 3) {
+                        monster.direction = Vector2.down;
+                    }
+
+                }
+
+            }
+        }
+
+    }
+
 
 }

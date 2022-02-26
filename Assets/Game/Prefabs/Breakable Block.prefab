@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 2934574411732626360}
   m_Layer: 0
   m_Name: Breakable Block
-  m_TagString: Untagged
+  m_TagString: Ground
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -74,7 +74,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: -943049373413075376, guid: 5db8a57faa3d9ef4e9c7ad78f100b778, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 639f274a4acdffc4bbfa8ba28b821e08, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -123,6 +123,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6938871330b1d6b4db9a562c19a4d2b0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _break: 0
+  isBroken: 0
+  group: []
 --- !u!114 &2934574411732626360
 MonoBehaviour:
   m_ObjectHideFlags: 0

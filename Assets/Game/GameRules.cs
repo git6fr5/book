@@ -68,6 +68,7 @@ public class GameRules : MonoBehaviour {
         }
 
         Time.timeScale = timeScale;
+
     }
 
     /* --- Methods --- */
